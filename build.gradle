@@ -1,0 +1,92 @@
+plugins {
+    id 'java'
+    id 'nu.studer.jooq' version '3.0.3'
+    id 'application'
+    id 'org.flywaydb.flyway' version '5.2.4'
+}
+
+group 'com.zzzkvidi4'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+mainClassName = 'com.zzzkvidi4.server.Starter'
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    flywayMigration
+}
+
+dependencies {
+    implementation 'org.eclipse.jetty:jetty-server:9.4.19.v20190610'
+    implementation 'org.eclipse.jetty:jetty-servlet:9.4.19.v20190610'
+    implementation 'org.jooq:jooq:3.11.11'
+    implementation 'org.jooq:jooq-meta:3.11.11'
+    implementation 'org.jooq:jooq-codegen:3.11.11'
+    implementation 'org.postgresql:postgresql:42.2.5'
+    implementation 'org.jetbrains:annotations:17.0.0'
+    implementation 'org.eclipse.jetty:jetty-servlets:9.4.19.v20190610'
+    implementation 'com.google.inject:guice:4.2.2'
+    implementation 'org.flywaydb:flyway-core:5.2.4'
+
+    compile group: 'com.google.inject.extensions', name: 'guice-servlet', version: '4.2.2'
+    compile group: 'org.glassfish.hk2', name: 'guice-bridge', version: '2.6.0'
+    compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-servlet', version: '2.29'
+    compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: '2.29'
+    compile group: 'org.glassfish.jersey.media', name: 'jersey-media-jaxb', version: '2.29'
+    compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: '2.29'
+    compile group: 'org.glassfish.jersey.media', name: 'jersey-media-multipart', version: '2.29'
+
+    flywayMigration 'org.postgresql:postgresql:42.2.5'
+
+    jooqRuntime 'org.postgresql:postgresql:42.2.5'
+
+    compileOnly 'org.projectlombok:lombok:1.18.8'
+    annotationProcessor 'org.projectlombok:lombok:1.18.8'
+}
+
+jooq {
+    version = '3.11.11'
+    dev(sourceSets.main) {
+        jdbc {
+            driver = 'org.postgresql.Driver'
+            url = 'jdbc:postgresql://localhost:5432/server'
+            user = 'postgres'
+            password = 'postgres'
+
+        }
+
+        generator {
+            name = 'org.jooq.codegen.DefaultGenerator'
+            strategy {
+                name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+            }
+            database {
+                name = 'org.jooq.meta.postgres.PostgresDatabase'
+                inputSchema = 'public'
+            }
+            generate {
+                relations = true
+                deprecated = false
+                records = true
+                fluentSetters = true
+                daos = true
+            }
+            target {
+                packageName = 'com.zzzkvidi4.dal'
+            }
+        }
+    }
+}
+
+flyway {
+    url = 'jdbc:postgresql://localhost:5432/server'
+    user = 'postgres'
+    password = 'postgres'
+    configurations = ['flywayMigration']
+}
+
+generateDevJooqSchemaSource.dependsOn(flywayMigrate)
+run.dependsOn(generateDevJooqSchemaSource)
